@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tab Organizer Font Options</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --panel: #cdd7d2;
+        --ink: #151917;
+        --muted: #53605c;
+        --orange: #f05a24;
+        --display: #090c0b;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: #e8e3d8;
+        color: var(--ink);
+        font-family: "Helvetica Neue", Arial, sans-serif;
+        padding: 28px;
+      }
+
+      main {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 22px;
+      }
+
+      .option {
+        background: var(--panel);
+        border: 1px solid #aab6b2;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+        padding: 12px;
+        width: 356px;
+      }
+
+      .meta {
+        align-items: flex-start;
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .sample {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        padding-top: 6px;
+      }
+
+      .model {
+        font-size: 22px;
+        line-height: 0.95;
+      }
+
+      h2 {
+        border-bottom: 1px solid var(--orange);
+        font-size: 11px;
+        line-height: 1;
+        margin: 0;
+        padding-bottom: 4px;
+        text-transform: uppercase;
+      }
+
+      .sub {
+        color: #313a37;
+        font-size: 8px;
+        margin: 0;
+        text-transform: uppercase;
+      }
+
+      .speaker {
+        background:
+          radial-gradient(circle, #333b39 34%, transparent 36%) 0 0 / 10px 10px,
+          #9aa7a3;
+        border: 1px solid #84918d;
+        border-radius: 3px;
+        height: 64px;
+        overflow: hidden;
+        position: relative;
+        width: 94px;
+      }
+
+      .speaker::after {
+        animation: dotWave 2.4s linear infinite;
+        animation-delay: -0.8s;
+        background:
+          radial-gradient(circle, var(--orange) 34%, transparent 36%) 0 0 / 10px 10px;
+        clip-path: polygon(0 18%, 18% 8%, 34% 22%, 50% 36%, 66% 24%, 84% 10%, 100% 20%, 100% 82%, 84% 92%, 66% 78%, 50% 66%, 34% 80%, 18% 94%, 0 84%);
+        content: "";
+        height: 100%;
+        left: 0;
+        opacity: 0.9;
+        position: absolute;
+        top: 0;
+        width: 72px;
+      }
+
+      .display {
+        background: var(--display);
+        border: 1px solid #050707;
+        border-radius: 4px;
+        color: #d9f2ea;
+        font-family: "Courier New", ui-monospace, monospace;
+        font-size: 12px;
+        line-height: 1.35;
+        margin-top: 12px;
+        min-height: 72px;
+        padding: 14px 12px;
+        text-transform: uppercase;
+      }
+
+      .pads {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(3, 1fr);
+        margin-top: 16px;
+      }
+
+      .pad {
+        align-items: center;
+        border: 1px solid rgba(0, 0, 0, 0.28);
+        border-radius: 5px;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.62), 0 4px 0 rgba(35, 44, 41, 0.22);
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        justify-content: center;
+        min-height: 76px;
+        padding: 9px 8px;
+        text-transform: uppercase;
+      }
+
+      .pad-light {
+        background: #dce4df;
+      }
+
+      .pad-orange {
+        background: var(--orange);
+        color: #fff;
+      }
+
+      .pad-dark {
+        background: #151a19;
+        color: #eef4ef;
+      }
+
+      .label {
+        background: rgba(255, 255, 255, 0.72);
+        border-radius: 1px;
+        color: #2d3633;
+        font-size: 7px;
+        line-height: 1;
+        padding: 3px 5px;
+        width: 68px;
+      }
+
+      .main {
+        font-size: 13px;
+        line-height: 0.95;
+      }
+
+      .small {
+        font-size: 8px;
+        line-height: 1.1;
+      }
+
+      .note {
+        color: var(--muted);
+        font-family: "Helvetica Neue", Arial, sans-serif;
+        font-size: 12px;
+        line-height: 1.35;
+        margin: 12px 0 0;
+      }
+
+      .din {
+        font-family: "DIN Condensed", "Avenir Next Condensed", "Arial Narrow", sans-serif;
+        font-weight: 500;
+      }
+
+      .din .label {
+        letter-spacing: 0.08em;
+      }
+
+      .din .main {
+        letter-spacing: 0.035em;
+      }
+
+      .din .small {
+        letter-spacing: 0.055em;
+      }
+
+      .avenir {
+        font-family: "Avenir Next Condensed", "Avenir Next", "Arial Narrow", sans-serif;
+        font-weight: 500;
+      }
+
+      .helvetica {
+        font-family: "Helvetica Neue Condensed", "Arial Narrow", "Helvetica Neue", sans-serif;
+        font-weight: 500;
+      }
+
+      .arial {
+        font-family: "Arial Narrow", Arial, sans-serif;
+        font-weight: 500;
+      }
+
+      @keyframes dotWave {
+        from {
+          transform: translateX(-76px);
+        }
+
+        to {
+          transform: translateX(104px);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .speaker::after {
+          animation: none;
+          transform: translateX(12px);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="option din">
+        <div class="meta">
+          <div class="sample">
+            <div class="model">T.O. I</div>
+            <h2>tab organizer</h2>
+            <p class="sub">window group composer</p>
+          </div>
+          <div class="speaker"></div>
+        </div>
+        <div class="display">ready to organize this window or consolidate across windows.</div>
+        <div class="pads">
+          <div class="pad pad-light"><span class="label">keys</span><span class="main">organize</span><span class="small">this window</span></div>
+          <div class="pad pad-orange"><span class="label">commit</span><span class="main">collect</span><span class="small">all windows</span></div>
+          <div class="pad pad-dark"><span class="label">erase</span><span class="main">undo</span><span class="small">last move</span></div>
+        </div>
+        <p class="note">Option A: DIN Condensed. Closest to the printed instrument-label feel when available.</p>
+      </section>
+
+      <section class="option avenir">
+        <div class="meta">
+          <div class="sample">
+            <div class="model">T.O. I</div>
+            <h2>tab organizer</h2>
+            <p class="sub">window group composer</p>
+          </div>
+          <div class="speaker"></div>
+        </div>
+        <div class="display">ready to organize this window or consolidate across windows.</div>
+        <div class="pads">
+          <div class="pad pad-light"><span class="label">keys</span><span class="main">organize</span><span class="small">this window</span></div>
+          <div class="pad pad-orange"><span class="label">commit</span><span class="main">collect</span><span class="small">all windows</span></div>
+          <div class="pad pad-dark"><span class="label">erase</span><span class="main">undo</span><span class="small">last move</span></div>
+        </div>
+        <p class="note">Option B: Avenir Next Condensed. Softer and more modern, still hardware-like.</p>
+      </section>
+
+      <section class="option helvetica">
+        <div class="meta">
+          <div class="sample">
+            <div class="model">T.O. I</div>
+            <h2>tab organizer</h2>
+            <p class="sub">window group composer</p>
+          </div>
+          <div class="speaker"></div>
+        </div>
+        <div class="display">ready to organize this window or consolidate across windows.</div>
+        <div class="pads">
+          <div class="pad pad-light"><span class="label">keys</span><span class="main">organize</span><span class="small">this window</span></div>
+          <div class="pad pad-orange"><span class="label">commit</span><span class="main">collect</span><span class="small">all windows</span></div>
+          <div class="pad pad-dark"><span class="label">erase</span><span class="main">undo</span><span class="small">last move</span></div>
+        </div>
+        <p class="note">Option C: Helvetica Neue Condensed. Clean, neutral, and less stylized.</p>
+      </section>
+
+      <section class="option arial">
+        <div class="meta">
+          <div class="sample">
+            <div class="model">T.O. I</div>
+            <h2>tab organizer</h2>
+            <p class="sub">window group composer</p>
+          </div>
+          <div class="speaker"></div>
+        </div>
+        <div class="display">ready to organize this window or consolidate across windows.</div>
+        <div class="pads">
+          <div class="pad pad-light"><span class="label">keys</span><span class="main">organize</span><span class="small">this window</span></div>
+          <div class="pad pad-orange"><span class="label">commit</span><span class="main">collect</span><span class="small">all windows</span></div>
+          <div class="pad pad-dark"><span class="label">erase</span><span class="main">undo</span><span class="small">last move</span></div>
+        </div>
+        <p class="note">Option D: Arial Narrow. Reliable fallback, sharper and more utilitarian.</p>
+      </section>
+    </main>
+  </body>
+</html>

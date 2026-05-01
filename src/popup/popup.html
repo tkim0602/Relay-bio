@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tab Organizer</title>
+    <link rel="stylesheet" href="./popup.css">
+  </head>
+  <body>
+    <main class="popup-shell">
+      <header class="top-panel">
+        <div class="title-row">
+          <div class="product-copy">
+            <p class="model">T.O. I</p>
+            <h1>tab organizer</h1>
+          </div>
+          <div class="speaker" aria-hidden="true"></div>
+        </div>
+      </header>
+
+      <section class="display-strip" aria-live="polite">
+        <p id="status" class="status">Loading status...</p>
+      </section>
+
+      <section class="actions" aria-label="Tab organization actions">
+        <button id="organizeCurrentButton" type="button" class="pad pad-light">
+          <span class="pad-main">organize</span>
+          <span class="pad-sub">this window</span>
+        </button>
+        <button id="consolidateButton" type="button" class="pad pad-orange">
+          <span class="pad-main">collect</span>
+          <span class="pad-sub">all windows</span>
+        </button>
+        <button id="undoButton" type="button" class="pad pad-dark">
+          <span class="pad-main">undo</span>
+          <span class="pad-sub">last move</span>
+        </button>
+      </section>
+    </main>
+
+    <script type="module" src="./popup.js"></script>
+  </body>
+</html>

@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "ai:server": "node server/ai-classifier-server.js",
+    "check": "node --check src/background.js && node --check src/popup/popup.js && node --check server/ai-classifier-server.js",
+    "validate": "npm test && npm run check",
     "test": "node --test"
   }
 }

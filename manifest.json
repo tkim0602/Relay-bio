@@ -4,6 +4,7 @@
   "description": "Organize open tabs into local category-based groups.",
   "version": "0.1.0",
   "permissions": ["tabs", "tabGroups", "storage"],
+  "host_permissions": ["http://127.0.0.1/*", "http://localhost/*"],
   "background": {
     "service_worker": "src/background.js",
     "type": "module"

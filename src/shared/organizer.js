@@ -1,20 +1,22 @@
-import { CATEGORY_ORDER, classifyTab } from "./categories.js";
+import { CATEGORY_ORDER, classifyTab, normalizeCategoryName } from "./categories.js";
 import { countScreeningReasons, screenTab } from "./screener.js";
 
-export function buildWindowPlan(tabs) {
+export function buildWindowPlan(tabs, options = {}) {
   const sortedTabs = [...tabs].sort((a, b) => a.index - b.index);
   const startIndex = sortedTabs.filter((tab) => tab.pinned).length;
 
-  return buildPlanFromOrderedTabs(sortedTabs, startIndex);
+  return buildPlanFromOrderedTabs(sortedTabs, startIndex, options);
 }
 
-export function buildCrossWindowPlan(orderedTabs, targetWindowId) {
+export function buildCrossWindowPlan(orderedTabs, targetWindowId, options = {}) {
   const targetPinnedCount = orderedTabs.filter((tab) => tab.windowId === targetWindowId && tab.pinned).length;
 
-  return buildPlanFromOrderedTabs(orderedTabs, targetPinnedCount);
+  return buildPlanFromOrderedTabs(orderedTabs, targetPinnedCount, options);
 }
 
-function buildPlanFromOrderedTabs(orderedTabs, startIndex) {
+function buildPlanFromOrderedTabs(orderedTabs, startIndex, options = {}) {
+  const categoryOverrides = options.categoryOverrides || new Map();
+  const preferredCategoryOrder = options.categoryOrder || CATEGORY_ORDER;
   const sortedTabs = [...orderedTabs];
   const screenedTabs = sortedTabs.map((tab) => ({
     tab,
@@ -25,7 +27,7 @@ function buildPlanFromOrderedTabs(orderedTabs, startIndex) {
     .map((item) => item.tab)
     .map((tab) => ({
       tab,
-      category: classifyTab(tab)
+      category: getTabCategory(tab, categoryOverrides)
     }));
   const skippedTabs = screenedTabs
     .filter((item) => !item.screen.eligible)
@@ -38,8 +40,9 @@ function buildPlanFromOrderedTabs(orderedTabs, startIndex) {
 
   const groups = [];
   const groupedTabIds = new Set();
+  const categoryOrder = buildCategoryOrder(preferredCategoryOrder, candidates);
 
-  for (const category of CATEGORY_ORDER) {
+  for (const category of categoryOrder) {
     const items = candidates.filter((item) => item.category === category);
     if (items.length < 2) {
       continue;
@@ -78,4 +81,31 @@ function buildPlanFromOrderedTabs(orderedTabs, startIndex) {
     organizedTabCount: candidates.length,
     groupCount: groups.length
   };
+}
+
+function getTabCategory(tab, categoryOverrides) {
+  const override = normalizeCategoryName(categoryOverrides.get(tab.id));
+  return override || classifyTab(tab);
+}
+
+function buildCategoryOrder(preferredCategoryOrder, candidates) {
+  const categoryOrder = [];
+  const seen = new Set();
+
+  for (const category of preferredCategoryOrder) {
+    const normalized = normalizeCategoryName(category);
+    if (normalized && !seen.has(normalized)) {
+      categoryOrder.push(normalized);
+      seen.add(normalized);
+    }
+  }
+
+  for (const item of candidates) {
+    if (!seen.has(item.category)) {
+      categoryOrder.push(item.category);
+      seen.add(item.category);
+    }
+  }
+
+  return categoryOrder;
 }

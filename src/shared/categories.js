@@ -1,27 +1,46 @@
 export const CATEGORY_ORDER = [
-  "Work",
-  "Research",
-  "Communication",
-  "Media",
-  "Shopping",
-  "Finance",
-  "Social",
-  "Other"
+  "Work & Projects",
+  "Learning & Reference",
+  "Messages & Meetings",
+  "Video, Music & News",
+  "Shopping & Orders",
+  "Money & Billing",
+  "Social Networks",
+  "AI",
+  "Miscellaneous"
+];
+
+export const FALLBACK_CATEGORY = "Miscellaneous";
+
+const CHROME_GROUP_COLORS = [
+  "blue",
+  "cyan",
+  "green",
+  "purple",
+  "orange",
+  "yellow",
+  "pink",
+  "grey"
 ];
 
 export const CATEGORY_COLORS = {
-  Work: "blue",
-  Research: "cyan",
-  Communication: "green",
-  Media: "purple",
-  Shopping: "orange",
-  Finance: "yellow",
-  Social: "pink",
-  Other: "grey"
+  "Work & Projects": "blue",
+  "Learning & Reference": "cyan",
+  "Messages & Meetings": "green",
+  "Video, Music & News": "purple",
+  "Shopping & Orders": "orange",
+  "Money & Billing": "yellow",
+  "Social Networks": "pink",
+  AI: "blue",
+  Miscellaneous: "grey"
 };
 
+export function getCategoryColor(category, index = 0) {
+  return CATEGORY_COLORS[category] || CHROME_GROUP_COLORS[index % CHROME_GROUP_COLORS.length];
+}
+
 const CATEGORY_RULES = {
-  Work: {
+  "Work & Projects": {
     domains: [
       "asana.com",
       "atlassian.net",
@@ -57,7 +76,7 @@ const CATEGORY_RULES = {
       "workspace"
     ]
   },
-  Research: {
+  "Learning & Reference": {
     domains: [
       "arxiv.org",
       "developer.chrome.com",
@@ -81,7 +100,7 @@ const CATEGORY_RULES = {
       "wikipedia"
     ]
   },
-  Communication: {
+  "Messages & Meetings": {
     domains: [
       "discord.com",
       "gmail.com",
@@ -107,7 +126,7 @@ const CATEGORY_RULES = {
       "teams"
     ]
   },
-  Media: {
+  "Video, Music & News": {
     domains: [
       "apple.com",
       "netflix.com",
@@ -132,7 +151,7 @@ const CATEGORY_RULES = {
       "youtube"
     ]
   },
-  Shopping: {
+  "Shopping & Orders": {
     domains: [
       "amazon.com",
       "bestbuy.com",
@@ -154,7 +173,7 @@ const CATEGORY_RULES = {
       "store"
     ]
   },
-  Finance: {
+  "Money & Billing": {
     domains: [
       "americanexpress.com",
       "bankofamerica.com",
@@ -178,7 +197,7 @@ const CATEGORY_RULES = {
       "tax"
     ]
   },
-  Social: {
+  "Social Networks": {
     domains: [
       "bsky.app",
       "facebook.com",
@@ -200,6 +219,41 @@ const CATEGORY_RULES = {
       "tiktok",
       "tweet"
     ]
+  },
+  AI: {
+    domains: [
+      "ai.google",
+      "anthropic.com",
+      "chat.com",
+      "chatgpt.com",
+      "claude.ai",
+      "cursor.com",
+      "gemini.google.com",
+      "huggingface.co",
+      "midjourney.com",
+      "openai.com",
+      "perplexity.ai",
+      "poe.com",
+      "replicate.com"
+    ],
+    keywords: [
+      "ai",
+      "anthropic",
+      "artificial intelligence",
+      "chatgpt",
+      "claude",
+      "codex",
+      "cursor",
+      "gemini",
+      "gpt",
+      "hugging face",
+      "llm",
+      "midjourney",
+      "model",
+      "openai",
+      "perplexity",
+      "prompt"
+    ]
   }
 };
 
@@ -208,7 +262,7 @@ export function classifyTab(tab) {
   const title = normalize(tab.title);
 
   for (const category of CATEGORY_ORDER) {
-    if (category === "Other") {
+    if (category === FALLBACK_CATEGORY) {
       continue;
     }
 
@@ -219,17 +273,40 @@ export function classifyTab(tab) {
   }
 
   for (const category of CATEGORY_ORDER) {
-    if (category === "Other") {
+    if (category === FALLBACK_CATEGORY) {
       continue;
     }
 
     const rules = CATEGORY_RULES[category];
-    if (rules.keywords.some((keyword) => title.includes(keyword))) {
+    if (rules.keywords.some((keyword) => matchesKeyword(title, keyword))) {
       return category;
     }
   }
 
-  return "Other";
+  return FALLBACK_CATEGORY;
+}
+
+export function isCategory(value) {
+  return CATEGORY_ORDER.includes(value);
+}
+
+export function normalizeCategoryName(value) {
+  const normalized = String(value || "")
+    .replace(/[^a-zA-Z0-9 &,/+-]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 32)
+    .trim();
+
+  return normalized.length >= 2 ? normalized : "";
+}
+
+export function normalizeGeneratedCategoryName(value) {
+  const firstTopic = String(value || "")
+    .replace(/\s+and\s+/gi, "&")
+    .split(/[&,/+|-]/)[0];
+
+  return normalizeCategoryName(firstTopic);
 }
 
 export function getHostname(rawUrl) {
@@ -246,6 +323,20 @@ export function getHostname(rawUrl) {
 
 function matchesAnyDomain(hostname, domains) {
   return domains.some((domain) => hostname === domain || hostname.endsWith(`.${domain}`));
+}
+
+function matchesKeyword(title, keyword) {
+  const normalizedKeyword = normalize(keyword);
+
+  if (normalizedKeyword.length <= 3) {
+    return new RegExp(`\\b${escapeRegex(normalizedKeyword)}\\b`, "i").test(title);
+  }
+
+  return title.includes(normalizedKeyword);
+}
+
+function escapeRegex(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function normalize(value) {

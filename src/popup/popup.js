@@ -142,6 +142,7 @@ async function renderStatus(summary, undoAvailable, command, shouldType = false)
 
   await renderer([
     `> ${command}`,
+    `classifier: ${formatClassifier(summary)}`,
     `organized: ${summary.tabsOrganized} tabs`,
     `groups: ${summary.groupsCreated}`,
     `scope: ${windowText}`,
@@ -149,6 +150,14 @@ async function renderStatus(summary, undoAvailable, command, shouldType = false)
     screenedText.trim(),
     undoAvailable ? "undo: available" : ""
   ].filter(Boolean));
+}
+
+function formatClassifier(summary) {
+  if (summary.classifierSource?.startsWith("ai:")) {
+    return `${summary.classifierSource.replace("ai:", "")} (${summary.aiClassifiedTabs || 0})`;
+  }
+
+  return summary.classifierError ? "local fallback" : "local rules";
 }
 
 function renderTerminal(lines) {
@@ -203,6 +212,9 @@ function createFakeSummary(type) {
     return {
       timestamp: Date.now(),
       mode: "crossWindow",
+      classifierSource: "ai:openai",
+      aiClassifiedTabs: 24,
+      classifierError: null,
       windowsProcessed: 3,
       tabsOrganized: 24,
       groupsCreated: 6,
@@ -214,6 +226,9 @@ function createFakeSummary(type) {
   return {
     timestamp: Date.now(),
     mode: "currentWindow",
+    classifierSource: "ai:openai",
+    aiClassifiedTabs: 9,
+    classifierError: null,
     windowsProcessed: 1,
     tabsOrganized: 9,
     groupsCreated: 3,

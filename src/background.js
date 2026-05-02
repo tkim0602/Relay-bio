@@ -1,4 +1,5 @@
-import { CATEGORY_COLORS } from "./shared/categories.js";
+import { CATEGORY_ORDER, getCategoryColor } from "./shared/categories.js";
+import { fetchAiCategoryMap } from "./shared/ai-classifier.js";
 import { buildCrossWindowPlan, buildWindowPlan } from "./shared/organizer.js";
 
 const STORAGE_KEYS = {
@@ -36,11 +37,17 @@ async function handleMessage(message) {
 
 async function organizeCurrentWindow() {
   const window = await getFocusedNormalWindow(true);
+  const tabs = window.tabs || [];
   const snapshot = await createSnapshot([window]);
-  const plan = buildWindowPlan(window.tabs || []);
+  const classifier = await classifyTabsForOrganization(tabs);
+  const plan = buildWindowPlan(tabs, {
+    categoryOverrides: classifier.categoryMap,
+    categoryOrder: classifier.categoryOrder
+  });
   const summary = createOrganizationSummary({
     windowsProcessed: 1,
     mode: "currentWindow",
+    classifier,
     plans: [plan]
   });
 
@@ -53,11 +60,15 @@ async function organizeCurrentWindow() {
 async function organizeAllWindows() {
   const windows = await chrome.windows.getAll({ populate: true, windowTypes: ["normal"] });
   const snapshot = await createSnapshot(windows);
+  const classifier = await classifyTabsForOrganization(flattenWindowTabs(windows));
   const plans = [];
 
   for (const window of windows) {
     const tabs = window.tabs || [];
-    const plan = buildWindowPlan(tabs);
+    const plan = buildWindowPlan(tabs, {
+      categoryOverrides: classifier.categoryMap,
+      categoryOrder: classifier.categoryOrder
+    });
 
     plans.push(plan);
 
@@ -67,6 +78,7 @@ async function organizeAllWindows() {
   const summary = createOrganizationSummary({
     windowsProcessed: windows.length,
     mode: "allWindowsSeparate",
+    classifier,
     plans
   });
 
@@ -80,11 +92,16 @@ async function consolidateAcrossWindows() {
   const windows = await chrome.windows.getAll({ populate: true, windowTypes: ["normal"] });
   const snapshot = await createSnapshot(windows);
   const orderedTabs = flattenWindowTabs(windows);
-  const plan = buildCrossWindowPlan(orderedTabs, targetWindow.id);
+  const classifier = await classifyTabsForOrganization(orderedTabs);
+  const plan = buildCrossWindowPlan(orderedTabs, targetWindow.id, {
+    categoryOverrides: classifier.categoryMap,
+    categoryOrder: classifier.categoryOrder
+  });
   const summary = createOrganizationSummary({
     windowsProcessed: windows.length,
     mode: "crossWindow",
     targetWindowId: targetWindow.id,
+    classifier,
     tabsMovedAcrossWindows: countMovedAcrossWindows(plan.orderedTabIds, orderedTabs, targetWindow.id),
     plans: [plan]
   });
@@ -107,7 +124,7 @@ async function applyWindowPlan(windowId, plan) {
     index: plan.startIndex
   });
 
-  for (const group of plan.groups) {
+  for (const [index, group] of plan.groups.entries()) {
     const groupId = await chrome.tabs.group({
       tabIds: group.tabIds,
       createProperties: { windowId }
@@ -115,7 +132,7 @@ async function applyWindowPlan(windowId, plan) {
 
     await chrome.tabGroups.update(groupId, {
       title: group.category,
-      color: CATEGORY_COLORS[group.category],
+      color: getCategoryColor(group.category, index),
       collapsed: false
     });
   }
@@ -280,10 +297,17 @@ async function moveTabsSafely(tabIds, moveProperties) {
     return;
   }
 
-  try {
-    await chrome.tabs.move(tabIds, moveProperties);
-  } catch (error) {
-    console.warn("Unable to move some tabs", error);
+  const startIndex = moveProperties.index ?? -1;
+
+  for (let offset = 0; offset < tabIds.length; offset += 1) {
+    try {
+      await chrome.tabs.move(tabIds[offset], {
+        ...moveProperties,
+        index: startIndex === -1 ? -1 : startIndex + offset
+      });
+    } catch (error) {
+      console.warn(`Unable to move tab ${tabIds[offset]}`, error);
+    }
   }
 }
 
@@ -330,6 +354,17 @@ async function getFocusedNormalWindow(populate) {
   });
 }
 
+async function classifyTabsForOrganization(tabs) {
+  const result = await fetchAiCategoryMap(tabs);
+
+  return {
+    source: result.ok && result.categoryMap.size > 0 ? result.source : "local",
+    error: result.error,
+    categoryMap: result.categoryMap,
+    categoryOrder: result.categoryOrder?.length ? result.categoryOrder : CATEGORY_ORDER
+  };
+}
+
 function flattenWindowTabs(windows) {
   return windows.flatMap((window, windowOrder) =>
     (window.tabs || [])
@@ -341,10 +376,21 @@ function flattenWindowTabs(windows) {
   );
 }
 
-function createOrganizationSummary({ windowsProcessed, mode, targetWindowId = null, tabsMovedAcrossWindows = 0, plans }) {
+function createOrganizationSummary({
+  windowsProcessed,
+  mode,
+  targetWindowId = null,
+  tabsMovedAcrossWindows = 0,
+  classifier = { source: "local", error: null, categoryMap: new Map(), categoryOrder: CATEGORY_ORDER },
+  plans
+}) {
   const summary = {
     timestamp: Date.now(),
     mode,
+    classifierSource: classifier.source,
+    classifierError: classifier.error || null,
+    aiClassifiedTabs: classifier.categoryMap?.size || 0,
+    generatedCategories: classifier.categoryOrder || [],
     windowsProcessed,
     tabsOrganized: 0,
     groupsCreated: 0,

@@ -25,7 +25,7 @@ test("buildWindowPlan excludes pinned tabs and starts organization after them", 
   assert.equal(plan.startIndex, 1);
   assert.equal(plan.skippedPinnedCount, 1);
   assert.equal(plan.screenedOutCount, 1);
-  assert.deepEqual(plan.groups.map((group) => group.category), ["Work"]);
+  assert.deepEqual(plan.groups.map((group) => group.category), ["Work & Projects"]);
   assert.deepEqual(plan.groups[0].tabIds, [2, 3]);
 });
 
@@ -36,11 +36,11 @@ test("buildWindowPlan creates groups only for categories with at least two tabs"
     tab({ id: 3, index: 2, url: "https://amazon.com/item" })
   ]);
 
-  assert.deepEqual(plan.groups.map((group) => group.category), ["Work"]);
+  assert.deepEqual(plan.groups.map((group) => group.category), ["Work & Projects"]);
   assert.deepEqual(plan.singles, [
     {
       tabId: 3,
-      category: "Shopping",
+      category: "Shopping & Orders",
       originalIndex: 2
     }
   ]);
@@ -55,10 +55,65 @@ test("buildWindowPlan emits grouped tabs in fixed category order before singles"
     tab({ id: 5, index: 4, url: "https://reddit.com/r/test" })
   ]);
 
-  assert.deepEqual(plan.groups.map((group) => group.category), ["Work", "Media"]);
+  assert.deepEqual(plan.groups.map((group) => group.category), ["Work & Projects", "Video, Music & News"]);
   assert.deepEqual(plan.orderedTabIds, [2, 4, 1, 3, 5]);
   assert.equal(plan.groupCount, 2);
   assert.equal(plan.organizedTabCount, 5);
+});
+
+test("buildWindowPlan uses AI category overrides when provided", () => {
+  const plan = buildWindowPlan(
+    [
+      tab({ id: 1, index: 0, url: "https://github.com/a" }),
+      tab({ id: 2, index: 1, url: "https://github.com/b" })
+    ],
+    {
+      categoryOverrides: new Map([
+        [1, "Learning & Reference"],
+        [2, "Learning & Reference"]
+      ])
+    }
+  );
+
+  assert.deepEqual(plan.groups.map((group) => group.category), ["Learning & Reference"]);
+  assert.deepEqual(plan.groups[0].tabIds, [1, 2]);
+});
+
+test("buildWindowPlan uses dynamic AI category order when provided", () => {
+  const plan = buildWindowPlan(
+    [
+      tab({ id: 1, index: 0, url: "https://github.com/a" }),
+      tab({ id: 2, index: 1, url: "https://figma.com/file/a" }),
+      tab({ id: 3, index: 2, url: "https://airbnb.com/rooms/1" }),
+      tab({ id: 4, index: 3, url: "https://maps.google.com" })
+    ],
+    {
+      categoryOrder: ["Trip Planning", "Design Work"],
+      categoryOverrides: new Map([
+        [1, "Design Work"],
+        [2, "Design Work"],
+        [3, "Trip Planning"],
+        [4, "Trip Planning"]
+      ])
+    }
+  );
+
+  assert.deepEqual(plan.groups.map((group) => group.category), ["Trip Planning", "Design Work"]);
+  assert.deepEqual(plan.orderedTabIds, [3, 4, 1, 2]);
+});
+
+test("buildWindowPlan ignores unusable AI category overrides", () => {
+  const plan = buildWindowPlan(
+    [
+      tab({ id: 1, index: 0, url: "https://github.com/a" }),
+      tab({ id: 2, index: 1, url: "https://github.com/b" })
+    ],
+    {
+      categoryOverrides: new Map([[1, "!"]])
+    }
+  );
+
+  assert.deepEqual(plan.groups.map((group) => group.category), ["Work & Projects"]);
 });
 
 test("buildWindowPlan screens out non-web tabs before classification and grouping", () => {
@@ -69,7 +124,7 @@ test("buildWindowPlan screens out non-web tabs before classification and groupin
     tab({ id: 4, index: 3, url: "file:///Users/test/report.pdf" })
   ]);
 
-  assert.deepEqual(plan.groups.map((group) => group.category), ["Work"]);
+  assert.deepEqual(plan.groups.map((group) => group.category), ["Work & Projects"]);
   assert.deepEqual(plan.groups[0].tabIds, [2, 3]);
   assert.deepEqual(plan.skippedTabs, [
     {
@@ -106,7 +161,7 @@ test("buildCrossWindowPlan consolidates eligible tabs across windows into fixed 
   );
 
   assert.equal(plan.startIndex, 1);
-  assert.deepEqual(plan.groups.map((group) => group.category), ["Work", "Media"]);
+  assert.deepEqual(plan.groups.map((group) => group.category), ["Work & Projects", "Video, Music & News"]);
   assert.deepEqual(plan.orderedTabIds, [4, 6, 2, 5]);
   assert.deepEqual(plan.pinnedTabIds, [1, 3]);
   assert.equal(plan.skippedPinnedCount, 2);
